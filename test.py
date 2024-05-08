@@ -1,43 +1,46 @@
 import streamlit as st
-import requests
+import openai
 import json
+from streamlit_handsontable import st_handsontable
 
-st.title('Text Input & OpenAI Response')
+# Set page configuration
+st.set_page_config(page_title="OpenAI Integration with Handsontable", layout="wide")
 
-text_input = st.text_input("Enter your text here, e.g., Describe a product")
+# Input fields for API key, text input, and attributes
+st.title("Text Input & OpenAI Response")
+api_key = st.text_input("Please provide your API Key:")
+user_input = st.text_area("Enter your text here, e.g., Describe a product")
 attributes_input = st.text_input("Enter comma-separated attributes")
 
-if st.button('Analyze and Display'):
-    attributes = [attr.strip() for attr in attributes_input.split(',') if attr]
-    
+# Process attributes
+attributes = [attr.strip() for attr in attributes_input.split(",")]
+
+# Submit button
+if st.button("Analyze and Display"):
     try:
-        headers = {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer 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'
-        }
+        # Set API key
+        openai.api_key = api_key
 
-        data = {
-            'model': 'gpt-4',
-            'messages': [
-                { 
-                    "role": "system",
-                    "content": "You are a helpful assistant. User is trying to convert unstructure text data in to table format.Extract data in Json format for table insert as per given attributes : " + ', '.join(attributes) 
-                },
-                { 
-                    "role": "user", 
-                    "content": text_input 
-                }
-            ]
-        }
+        # Call OpenAI API
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant. User is trying to convert unstructured text data into table format. Extract data in Json format for table insert as per given attributes : " + ", ".join(attributes)},
+                {"role": "user", "content": user_input},
+            ],
+        )
 
-        response = requests.post('https://api.openai.com/v1/engines/davinci-codex/completions', headers=headers, data=json.dumps(data))
-        api_response = response.json()
+        # Parse response and extract data
+        response_json = json.loads(response.choices[0].message.content)
+        formatted_data = [response_json.get(attr, "[Not Found]") for attr in attributes]
 
-        st.write('Full API Response:', api_response)
+        # Display full API response
+        st.subheader("Full API Response:")
+        st.json(response)
 
-        formatted_data = [api_response[attr] if attr in api_response else '[Not Found]' for attr in attributes]
-
-        st.table([formatted_data])
+        # Display table with Handsontable
+        st.subheader("Extracted Data:")
+        st_handsontable(pd.DataFrame([formatted_data], columns=attributes), height=300, width=700)
 
     except Exception as e:
-        st.error(f'Error: {e}')
+        st.error(f"Error: {e}")
