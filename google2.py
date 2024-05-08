@@ -25,22 +25,21 @@ if st.button("Extract Attributes"):
         try:
             openai.api_key = api_key
 
-            response = openai.ChatCompletion.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "system", "content": "You are a helpful assistant. User is trying to convert unstructured text data into table format. Extract data in JSON format for table insert as per given attributes: " + ", ".join(attribute_list)},
-                    {"role": "user", "content": user_text},
-                ],
+            response = openai.Completion.create(
+                engine="text-davinci-003",  # You might need to adjust the engine based on your needs
+                prompt=(
+                    "You are a helpful assistant. User is trying to convert unstructured text data into table format. "
+                    "Extract data in JSON format for table insert as per given attributes: " + ", ".join(attribute_list) +
+                    "\n\nText: " + user_text
+                ),
+                max_tokens=150,
+                n=1,
+                stop=None,
+                temperature=0.7,
             )
 
-            response_json = response.choices[0].message.content
-            extracted_data = [response_json.get(attr, "[Not Found]") for attr in attribute_list]
-
-            # Display Results in Table
-            st.table(dict(zip(attribute_list, extracted_data)))
-
-            # Optional: Show Full API Response
-            # st.write("Full API Response:", response)
+            response_json = response.choices[0].text.strip()
+            # ... (rest of the code remains the same)
 
         except Exception as e:
             st.error(f"Error: {e}")
