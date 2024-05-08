@@ -13,7 +13,7 @@ if st.button('Analyze and Display'):
     try:
         headers = {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer YOUR_SECRET_KEY'
+            'Authorization': 'Bearer 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'
         }
 
         data = {
